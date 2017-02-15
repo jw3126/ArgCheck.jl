@@ -3,10 +3,15 @@ module ArgCheck
 
 export @argcheck
 
-macro argcheck(code)
-    msg = "$code must hold."
-    :($(esc(code)) ? nothing : throw(ArgumentError($msg)))
+function argcheck(code, msg="$code must hold.")
+    :($code ? nothing : throw(ArgumentError($msg)))
 end
 
+macro argcheck(code)
+    esc(argcheck(code))
+end
+macro argcheck(code, msg)
+    esc(argcheck(code, msg))
+end
 
 end
