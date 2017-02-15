@@ -1,8 +1,8 @@
 # ArgCheck
 
-Usage:
+## Usage
 
-```
+```Julia
 
 julia> function f(x)
            x == 0 && throw(ArgumentError("x != 0 must hold"))
@@ -15,7 +15,7 @@ ERROR: ArgumentError: x != 0 must hold
  in f(::Int64) at ./REPL[10]:2
 ```
 
-```
+```Julia
 julia> using ArgCheck
 
 
@@ -31,11 +31,11 @@ ERROR: ArgumentError: x != 0 must hold.
 ```
 
 
-# Examples
+## Examples from the wild
 
-## [Dierckx](https://github.com/kbarbary/Dierckx.jl)
+### [Dierckx](https://github.com/kbarbary/Dierckx.jl)
 
-```
+```Julia
 function Spline1D(x::AbstractVector, y::AbstractVector,
                   xknots::AbstractVector;
                   w::AbstractVector=ones(length(x)),
@@ -50,7 +50,7 @@ function Spline1D(x::AbstractVector, y::AbstractVector,
 end
 ```
 
-```
+```Julia
 using ArgCheck
 
 function Spline1D(x::AbstractVector, y::AbstractVector,
@@ -67,9 +67,9 @@ function Spline1D(x::AbstractVector, y::AbstractVector,
 end
 ```
 
-## [LsqFit](https://github.com/JuliaNLSolvers/LsqFit.jl)
+### [LsqFit](https://github.com/JuliaNLSolvers/LsqFit.jl)
 
-```
+```Julia
 function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVector{T};
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
     lambda::Real = 10.0, lambda_increase::Real = 10., lambda_decrease::Real = 0.1,
@@ -88,7 +88,7 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
 (min_step_quality < good_step_quality) || throw(ArgumentError("min_step_quality < good_step_quality must hold."))
 ```
 
-```
+```Julia
 using ArgCheck
 
 function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVector{T};
