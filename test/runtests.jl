@@ -1,5 +1,6 @@
 using ArgCheck
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+x = 1
+@test_throws ArgumentError (@argcheck x > 1) 
+@argcheck x>0 # does not throw

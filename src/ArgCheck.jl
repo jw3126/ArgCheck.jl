@@ -1,5 +1,12 @@
+__precompile__()
 module ArgCheck
 
-# package code goes here
+export @argcheck
 
-end # module
+macro argcheck(code)
+    msg = "$code must hold."
+    :($(esc(code)) ? nothing : throw(ArgumentError($msg)))
+end
+
+
+end
