@@ -3,15 +3,17 @@ module ArgCheck
 
 export @argcheck
 
-function argcheck(code, msg="$code must hold.")
-    :($code ? nothing : throw(ArgumentError($msg)))
+build_error{T <: Exception}(code, ::Type{T}, args...) = T(args...)
+build_error{T <: Exception}(code, ::Type{T}=ArgumentError) = T("$code must hold.")
+build_error(code, msg::AbstractString) = ArgumentError(msg)
+build_error(code, err::Exception) = err
+
+function argcheck(code, args...)
+	err = Expr(:call, :(ArgCheck.build_error), QuoteNode(code), args...)
+	:($code ? nothing : throw($err))
 end
 
-macro argcheck(code)
-    esc(argcheck(code))
+macro argcheck(code,args...)
+    esc(argcheck(code, args...))
 end
-macro argcheck(code, msg)
-    esc(argcheck(code, msg))
-end
-
 end
