@@ -2,6 +2,31 @@
 
 [![Build Status](https://travis-ci.org/jw3126/ArgCheck.jl.svg?branch=master)](https://travis-ci.org/jw3126/ArgCheck.jl)
 
+## TL; DR
+```Julia
+Pkg.add("ArgCheck"); using ArgCheck
+```
+
+Replace
+```Julia
+function f(A, B, k, n)
+    (k > 0) && (n > 0) || throw(ArgumentError("k and n must be positive".))
+    k > n || throw(ArgumentError("k > n must hold."))
+    size(A) == size(B) || throw(DimensionMismatch("size(A) == size(B) must hold."))
+    # doit    
+end
+```
+by
+```Julia
+function f(A, B, k, n)
+    @argcheck k > 0 && n > 0
+    @argcheck k > n
+    @argcheck size(A) == size(B) DimensionMismatch
+    # doit
+end
+```
+## Longer version
+
 Often you have a function like this
 
 ```Julia
