@@ -2,33 +2,58 @@
 
 ## Usage
 
+Often you have a function like this
+
 ```Julia
-
-julia> function f(x)
-           x == 0 && throw(ArgumentError("x != 0 must hold"))
-           1/x
-       end
-f (generic function with 1 method)
-
-julia> f(0)
-ERROR: ArgumentError: x != 0 must hold
- in f(::Int64) at ./REPL[10]:2
+function f(x)
+    # does something awesome
+    # but works only if x > 0
+end
 ```
+So you need to enforce `x > 0`. The correct way would be:
+
+```Julia
+function f(x)
+    x > 0 || throw(ArgumentError("x > 0 must hold."))
+    # does something awesome
+    # but works only if x > 0
+end
+```
+This is quite a mouthful. Especially if your function has more then one argument
+that needs checking this becomes quite verbose. See real world examples below.
+
+Often people are too lazy to type the above and replace the above by
+```Julia
+x > 0 || error("x > 0 must hold.")
+```
+which is not as good, because it throws and `ErrorException` which is less precise then `ArgumentError`. Sometimes
+
+```Julia
+@assert x > 0
+```
+is used, which is very concise but a misuse `@assert`.
+
+The `@argcheck` macro allows you to be consise and have an appropriate error:
 
 ```Julia
 julia> using ArgCheck
 
-
-julia> function f2(x)
-           @argcheck x != 0
-           1/x
+julia> function f(x)
+           @argcheck x > 0
        end
-f2 (generic function with 1 method)
+f (generic function with 1 method)
 
-julia> f2(0)
-ERROR: ArgumentError: x != 0 must hold.
- in f2(::Int64) at ./REPL[12]:2
+julia> f(1)
+
+julia> f(-1)
+ERROR: ArgumentError: x > 0 must hold.
+ in f(::Int64) at ./REPL[2]:2
 ```
+
+You can also customize the error:
+
+`@argcheck x > 0 DimensionMismatch`
+`@argcheck x > 0 MyCustomError("my custom message")`
 
 
 ## Examples from the wild
@@ -51,20 +76,12 @@ end
 ```
 
 ```Julia
-using ArgCheck
-
-function Spline1D(x::AbstractVector, y::AbstractVector,
-                  xknots::AbstractVector;
-                  w::AbstractVector=ones(length(x)),
-                  k::Int=3, bc::AbstractString="nearest")
-
     @argcheck length(x) == length(y)
     @argcheck length(x) == length(w)
     @argcheck length(x) > k
     @argcheck length(xknots) <= length(x) + k + 1
     @argcheck first(x) < first(xknots)
     @argcheck last(x) > last(xknots)
-end
 ```
 
 ### [LsqFit](https://github.com/JuliaNLSolvers/LsqFit.jl)
@@ -89,17 +106,6 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
 ```
 
 ```Julia
-using ArgCheck
-
-function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVector{T};
-    tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
-    lambda::Real = 10.0, lambda_increase::Real = 10., lambda_decrease::Real = 0.1,
-    min_step_quality::Real = 1e-3, good_step_quality::Real = 0.75,
-    show_trace::Bool = false, lower::Vector{T} = Array{T}(0), upper::Vector{T} = Array{T}(0)
-    )
-
-
-    # check parameters
     @argcheck isempty(lower) || length(lower) == length(initial_x)
     @argcheck isempty(upper) || length(upper) == length(initial_x)
     @argcheck (isempty(lower) || all(initial_x .>= lower)) && (isempty(upper) || all(initial_x .<= upper)) "Initial guess must be within bounds."
