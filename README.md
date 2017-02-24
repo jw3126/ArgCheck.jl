@@ -1,6 +1,6 @@
 # ArgCheck
 
-## Usage
+[![Build Status](https://travis-ci.org/jw3126/ArgCheck.jl.svg?branch=master)](https://travis-ci.org/jw3126/ArgCheck.jl.svg?branch=master)
 
 Often you have a function like this
 
