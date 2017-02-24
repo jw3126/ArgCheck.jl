@@ -26,12 +26,12 @@ Often people are too lazy to type the above and replace the above by
 ```Julia
 x > 0 || error("x > 0 must hold.")
 ```
-which is not as good, because it throws and `ErrorException` which is less precise then `ArgumentError`. Sometimes
+This is not perfect, because it throws and `ErrorException`, which is less precise then `ArgumentError`. Sometimes
 
 ```Julia
 @assert x > 0
 ```
-is used, which is very concise but a misuse `@assert`.
+is used, which is very concise, but a misuse `@assert`.
 
 The `@argcheck` macro allows you to be consise and have an appropriate error:
 
@@ -52,8 +52,12 @@ ERROR: ArgumentError: x > 0 must hold.
 
 You can also customize the error:
 
-`@argcheck x > 0 DimensionMismatch`
-`@argcheck x > 0 MyCustomError("my custom message")`
+```Julia
+@argcheck size(A) == size(B) DimensionMismatch
+```
+```Julia 
+@argcheck x > 0 SomeErrorType(my, custom, args)
+```
 
 
 ## Examples from the wild
