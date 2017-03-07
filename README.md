@@ -13,6 +13,7 @@ function f(A, B, k, n)
     (k > 0) && (n > 0) || throw(ArgumentError("k and n must be positive".))
     k > n || throw(ArgumentError("k > n must hold."))
     size(A) == size(B) || throw(DimensionMismatch("size(A) == size(B) must hold."))
+    det(A) < 0 || throw(DomainError())
     # doit    
 end
 ```
@@ -22,6 +23,7 @@ function f(A, B, k, n)
     @argcheck k > 0 && n > 0
     @argcheck k > n
     @argcheck size(A) == size(B) DimensionMismatch
+    @argcheck det(A) < 0 DomainError()
     # doit
 end
 ```
