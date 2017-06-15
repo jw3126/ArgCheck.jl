@@ -1,7 +1,5 @@
 using ArgCheck
 using Base.Test
-using Compat
-import ArgCheck: build_error
 
 import ArgCheck: iscomparison
 @testset "iscomparison" begin
@@ -39,7 +37,7 @@ end
     # comparison
     try
         @argcheck x == y MyError
-        @test false # argcheck shout throw before this is reached
+        error("@argcheck should throw before this is reached!")
     catch err
         @test isa(err, MyError)
         msg = err.msg
