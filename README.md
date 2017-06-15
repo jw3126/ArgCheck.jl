@@ -1,7 +1,7 @@
 # ArgCheck
 
 [![Build Status](https://travis-ci.org/jw3126/ArgCheck.jl.svg?branch=master)](https://travis-ci.org/jw3126/ArgCheck.jl)
-
+[![Coverage Status](https://coveralls.io/repos/github/jw3126/ArgCheck.jl/badge.svg?branch=master)](https://coveralls.io/github/jw3126/ArgCheck.jl?branch=master)
 ## Installation
 ```Julia
 Pkg.add("ArgCheck")
