@@ -29,7 +29,7 @@ end
     @argcheck 1 !=0 DivideError()
 end
 
-@compat struct MyError <: Exception
+immutable MyError <: Exception
     msg::String
 end
 
