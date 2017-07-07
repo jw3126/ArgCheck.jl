@@ -22,7 +22,9 @@ end
 
 iscomparison(ex) = false
 function iscomparison(ex::Expr) 
-    ex.head == :comparison && return true
+    # TODO
+    # support chains like 1 == 2 < 3
+    # ex.head == :comparison && return true
     # Expr(:call, ≈, 1, 2) should also be a comparison.
     if ex.head == :call && length(ex.args) == 3
         op = ex.args[1]

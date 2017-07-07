@@ -7,6 +7,21 @@ import ArgCheck: iscomparison
     @test iscomparison(:(f(2x) + 1 ≈ f(x)))
     @test iscomparison(:(<(2,3)))
     @test !iscomparison(:(f(1,1)))
+
+    @test_broken iscomparison_symbol(:(1 == 2 == 3))
+end
+
+@testset "Chained comparisons" begin
+    #6
+    x=y=z = 1
+    @test x == y == z
+    @argcheck x == y == z
+    z = 2
+    @test_throws ArgumentError @argcheck x == y == z
+
+    @test_throws ArgumentError @argcheck 1 ≈ 2 == 2
+    @argcheck 1 == 1 ≈ 1 < 2 > 1.2
+    @test_throws DimensionMismatch @argcheck 1 < 2 ==3 DimensionMismatch 
 end
 
 @testset "@argcheck" begin
