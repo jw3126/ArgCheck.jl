@@ -14,44 +14,76 @@ build_error_comparison{T <: Exception}(code, lhs, rhs, vlhs, vrhs, ::Type{T}=Arg
     $lhs => $vlhs
     $rhs => $vrhs""")
 
-iscomparison_symbol(op) = false
-function iscomparison_symbol(op::Symbol)
+function is_comparison_call(ex::Expr)
+    ex.head == :call &&
+    length(ex.args) == 3 &&
+    is_comparison_op(ex.args[1])
+end
+is_comparison_op(op) = false
+function is_comparison_op(op::Symbol)
     precedence = 6 # does this catch all comparisons?
     Base.operator_precedence(op) == precedence
 end
 
-iscomparison(ex) = false
-function iscomparison(ex::Expr) 
-    # TODO
-    # support chains like 1 == 2 < 3
-    # ex.head == :comparison && return true
-    # Expr(:call, ≈, 1, 2) should also be a comparison.
-    if ex.head == :call && length(ex.args) == 3
-        op = ex.args[1]
-        iscomparison_symbol(op) && return true
+canonicalize(x) = x
+function canonicalize(ex::Expr)
+    if is_comparison_call(ex)
+        op, lhs, rhs = ex.args
+        Expr(:comparison, lhs, op, rhs)
+    else
+        ex
     end
-    return false
 end
 
-function argcheck(code, args...)
-    if iscomparison(code)
-        op, lhs, rhs = code.args
-        vlhs = gensym("vlhs")
-        vrhs = gensym("vrhs")
-        preamble = :($vlhs = $lhs; $vrhs = $rhs)
-        condition = Expr(:call, op, vlhs, vrhs)
-        err = Expr(:call, :(ArgCheck.build_error_comparison), 
-            QuoteNode(code), QuoteNode(lhs), QuoteNode(rhs), vlhs, vrhs, args...)
-    else
-        preamble = :()
-        condition = code
-        err = Expr(:call, :(ArgCheck.build_error), QuoteNode(code), args...)
-    end
+function argcheck_fallback(ex, args...)
     quote
-        $preamble
-        if !($condition)
-            throw($err)
+        if !($ex)
+            err = ArgCheck.build_error($(QuoteNode(ex)), $(args...))
+            throw(err)
         end
+    end
+end
+
+function argcheck_comparison(ex, args...)
+    exprs = ex.args[1:2:end]
+    ops = ex.args[2:2:end]
+    variables = map(gensym, [string("v$i") for i in 1:length(exprs)])
+    ret = quote end
+    rhs = exprs[1]
+    vrhs = variables[1]
+    assignment = Expr(:(=), vrhs, rhs)
+    push!(ret.args, assignment)
+    for i in eachindex(ops)   
+        op = ops[i]
+        lhs = rhs
+        vlhs = vrhs
+        rhs = exprs[i+1]
+        vrhs = variables[i+1]
+        assignment = Expr(:(=), vrhs, rhs)
+        condition = Expr(:call, op, vlhs, vrhs)
+        code = Expr(:call, op, lhs, rhs)
+        err = Expr(:call, :(ArgCheck.build_error_comparison), 
+            QuoteNode(code), QuoteNode(lhs), QuoteNode(rhs), 
+            vlhs, vrhs, args...)
+        reti = quote
+            $assignment
+            if !($condition)
+                throw($err)
+            end
+        end
+        append!(ret.args, reti.args)
+    end
+    ret
+end
+
+function argcheck(ex, args...)
+    ex = canonicalize(ex)
+    if !isa(ex, Expr) 
+        argcheck_fallback(ex, args...)
+    elseif ex.head == :comparison
+        argcheck_comparison(ex, args...)
+    else
+        argcheck_fallback(ex, args...)
     end
 end
 
