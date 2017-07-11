@@ -3,7 +3,10 @@ module ArgCheck
 
 export @argcheck
 
-build_error{T <: Exception}(code, ::Type{T}, args...) = T(args...)
+function build_error{T <: Exception}(code, ::Type{T}, args...) 
+    warn("`@argcheck condition $T $(join(args, ' ')...)` is deprecated. Use `@argcheck condition $T($(join(args, ", ")...))` instead")
+    T(args...)
+end
 build_error{T <: Exception}(code, ::Type{T}=ArgumentError) = T("$code must hold.")
 build_error(code, msg::AbstractString) = ArgumentError(msg)
 build_error(code, err::Exception) = err
