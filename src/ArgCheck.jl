@@ -3,16 +3,16 @@ module ArgCheck
 
 export @argcheck
 
-function build_error{T <: Exception}(code, ::Type{T}, args...) 
+function build_error(code, T::Type{<:Exception}, args...) 
     warn("`@argcheck condition $T $(join(args, ' ')...)` is deprecated. Use `@argcheck condition $T($(join(args, ", ")...))` instead")
     T(args...)
 end
-build_error{T <: Exception}(code, ::Type{T}=ArgumentError) = T("$code must hold.")
+build_error(code, T::Type{<:Exception}=ArgumentError) = T("$code must hold.")
 build_error(code, msg::AbstractString) = ArgumentError(msg)
 build_error(code, err::Exception) = err
 
 build_error_comparison(code, lhs, rhs, vlhs, vrhs, args...) = build_error(code, args...)
-build_error_comparison{T <: Exception}(code, lhs, rhs, vlhs, vrhs, ::Type{T}=ArgumentError) =
+build_error_comparison(code, lhs, rhs, vlhs, vrhs, T::Type{<:Exception}=ArgumentError) =
     T("""$code must hold. Got
     $lhs => $vlhs
     $rhs => $vrhs""")
@@ -90,6 +90,20 @@ function argcheck(ex, args...)
     end
 end
 
+"""
+    @argcheck
+
+Macro for checking invariants on function arguments.
+It can be used as follows:
+```Julia
+function myfunction(k,n,A,B)
+    @argcheck k > n
+    @argcheck size(A) == size(B) DimensionMismatch
+    @argcheck det(A) < 0 DomainError()
+    # doit
+end
+```
+"""
 macro argcheck(code,args...)
     esc(argcheck(code, args...))
 end

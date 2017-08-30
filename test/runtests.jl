@@ -75,13 +75,13 @@ x = 1; y = 2
 @argcheck op()(x,y)
 @test_throws ArgumentError @argcheck op()(y,x)
 
-immutable MyExoticError <: Exception
+struct MyExoticError <: Exception
     a::Int
     b::Int
 end
 
 
-immutable MyError <: Exception
+struct MyError <: Exception
     msg::String
 end
 
@@ -110,6 +110,10 @@ end
     @test contains(msg, "<")
     @test !contains(msg, string(x))
 
+    err = @catch_exception_object @argcheck false MyExoticError(1,2)
+    @test err === MyExoticError(1,2)
+    
+    # deprecate
     err = @catch_exception_object @argcheck false MyExoticError 1 2
     @test err === MyExoticError(1,2)
 end
