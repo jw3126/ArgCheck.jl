@@ -1,40 +1,35 @@
 __precompile__()
 module ArgCheck
-
 export @argcheck
 
-function build_error(code, T::Type{<:Exception}, args...) 
-    warn("`@argcheck condition $T $(join(args, ' ')...)` is deprecated. Use `@argcheck condition $T($(join(args, ", ")...))` instead")
-    T(args...)
-end
-build_error(code, T::Type{<:Exception}=ArgumentError) = T("$code must hold.")
-build_error(code, msg::AbstractString) = ArgumentError(msg)
-build_error(code, err::Exception) = err
+"""
+    @argcheck
 
-build_error_comparison(code, lhs, rhs, vlhs, vrhs, args...) = build_error(code, args...)
-build_error_comparison(code, lhs, rhs, vlhs, vrhs, T::Type{<:Exception}=ArgumentError) =
-    T("""$code must hold. Got
-    $lhs => $vlhs
-    $rhs => $vrhs""")
-
-function is_comparison_call(ex::Expr)
-    ex.head == :call &&
-    length(ex.args) == 3 &&
-    is_comparison_op(ex.args[1])
+Macro for checking invariants on function arguments.
+It can be used as follows:
+```Julia
+function myfunction(k,n,A,B)
+    @argcheck k > n
+    @argcheck size(A) == size(B) DimensionMismatch
+    @argcheck det(A) < 0 DomainError()
+    # doit
 end
-is_comparison_op(op) = false
-function is_comparison_op(op::Symbol)
-    precedence = 6 # does this catch all comparisons?
-    Base.operator_precedence(op) == precedence
+```
+"""
+macro argcheck(code,args...)
+    esc(argcheck(code, args...))
 end
 
-canonicalize(x) = x
-function canonicalize(ex::Expr)
-    if is_comparison_call(ex)
-        op, lhs, rhs = ex.args
-        Expr(:comparison, lhs, op, rhs)
+function argcheck(ex, args...)
+    ex = canonicalize(ex)
+    if !isa(ex, Expr)
+        argcheck_fallback(ex, args...)
+    elseif ex.head == :comparison
+        argcheck_comparison(ex, args...)
+    elseif ex.head == :call
+        argcheck_call(ex, args...)
     else
-        ex
+        argcheck_fallback(ex, args...)
     end
 end
 
@@ -47,6 +42,29 @@ function argcheck_fallback(ex, args...)
     end
 end
 
+function argcheck_call(ex, args...)
+    variables = map(i -> gensym("v$i"), 1:length(ex.args))
+    assignments = map(variables, ex.args) do vi, exi
+        Expr(:(=), vi, exi)
+    end
+    condition = Expr(:call, variables...)
+    values = :([$(variables...)])
+    err = Expr(:call, 
+        :(ArgCheck.build_error_with_fancy_message), 
+        QuoteNode(ex),
+        QuoteNode(ex.args),
+        values,
+        args...
+    )
+    quote
+        $(assignments...)
+        if !($condition)
+            throw($err)
+        end
+    end
+end
+
+
 function argcheck_comparison(ex, args...)
     exprs = ex.args[1:2:end]
     ops = ex.args[2:2:end]
@@ -56,7 +74,7 @@ function argcheck_comparison(ex, args...)
     vrhs = variables[1]
     assignment = Expr(:(=), vrhs, rhs)
     push!(ret.args, assignment)
-    for i in eachindex(ops)   
+    for i in eachindex(ops)
         op = ops[i]
         lhs = rhs
         vlhs = vrhs
@@ -79,32 +97,62 @@ function argcheck_comparison(ex, args...)
     ret
 end
 
-function argcheck(ex, args...)
-    ex = canonicalize(ex)
-    if !isa(ex, Expr) 
-        argcheck_fallback(ex, args...)
-    elseif ex.head == :comparison
-        argcheck_comparison(ex, args...)
-    else
-        argcheck_fallback(ex, args...)
+
+function build_error(code, T::Type{<:Exception}, args...) 
+    ret = T(args...)
+    warn("`@argcheck condition $T $(join(args, ' ')...)` is deprecated. Use `@argcheck condition $ret` instead")
+    ret 
+end
+function build_error(code, msg::AbstractString)
+    ret = ArgumentError(msg)
+    warn("`@argcheck condition \"$msg\"` is deprecated. Use `@argcheck condition $ret` instead")
+    ret
+end
+build_error(code, T::Type{<:Exception}=ArgumentError) = T("$code must hold.")
+build_error(code, err::Exception) = err
+
+build_error_comparison(code, lhs, rhs, vlhs, vrhs, args...) = build_error(code, args...)
+@noinline function build_error_comparison(code, lhs, rhs, vlhs, vrhs, T::Type{<:Exception}=ArgumentError)
+    build_error_with_fancy_message(code, [lhs, rhs], [vlhs, vrhs], T)
+end
+
+build_error_with_fancy_message(code, variables, values, args...) = build_error(code, args...)
+@noinline function build_error_with_fancy_message(code, variables, values,
+                                        T::Type{<:Exception}=ArgumentError)
+    msg = fancy_error_message(code, variables, values)
+    T(msg)
+end
+
+function fancy_error_message(code, exprs, values)
+    lines = ["$code must hold. Got"]
+    foreach(exprs, values) do ex, val
+        sex = string(ex)
+        sval = string(val)
+        if sex != sval
+            push!(lines, "$sex => $sval")
+        end
     end
+    join(lines, '\n')
 end
 
-"""
-    @argcheck
-
-Macro for checking invariants on function arguments.
-It can be used as follows:
-```Julia
-function myfunction(k,n,A,B)
-    @argcheck k > n
-    @argcheck size(A) == size(B) DimensionMismatch
-    @argcheck det(A) < 0 DomainError()
-    # doit
+function is_comparison_call(ex::Expr)
+    ex.head == :call &&
+    length(ex.args) == 3 &&
+    is_comparison_op(ex.args[1])
 end
-```
-"""
-macro argcheck(code,args...)
-    esc(argcheck(code, args...))
+is_comparison_op(op) = false
+function is_comparison_op(op::Symbol)
+    precedence = 6 # does this catch all comparisons?
+    Base.operator_precedence(op) == precedence
+end
+
+canonicalize(x) = x
+function canonicalize(ex::Expr)
+    if is_comparison_call(ex)
+        op, lhs, rhs = ex.args
+        Expr(:comparison, lhs, op, rhs)
+    else
+        ex
+    end
 end
 end

@@ -1,20 +1,23 @@
 using ArgCheck
-using Base.Test
+if VERSION < v"0.7.0-"
+    using Base.Test
+else
+    using Test
+end
 
 macro catch_exception_object(code)
-    esc(quote
+    quote
         err = try
-            $code
+            $(esc(code))
             nothing
         catch e
             e
         end
         if err == nothing
-            error("Expected exception, got nothing.")
+            error("Expected exception, got $err.")
         end
         err
     end
-    )
 end
 
 import ArgCheck: is_comparison_call, canonicalize
@@ -51,7 +54,6 @@ end
 
     x = 1
     @test_throws ArgumentError (@argcheck x > 1)
-    @test_throws ArgumentError @argcheck x > 1 "this should not happen"
     @argcheck x>0 # does not throw
     
     n =2; m=3
@@ -65,8 +67,8 @@ end
 end
 
 # exotic cases
-f() = false
-t() = true
+f(args...) = false
+t(args...) = true
 @argcheck t()
 @test_throws ArgumentError @argcheck f()
 
@@ -74,18 +76,21 @@ op() = (x,y) -> x < y
 x = 1; y = 2
 @argcheck op()(x,y)
 @test_throws ArgumentError @argcheck op()(y,x)
+   
 
 struct MyExoticError <: Exception
     a::Int
     b::Int
 end
 
+err = @catch_exception_object @argcheck false MyExoticError(1,2)
+@test err === MyExoticError(1,2)
 
 struct MyError <: Exception
     msg::String
 end
 
-@testset "error message" begin
+@testset "error message comparison" begin
     x = 1.23455475675
     y = 2.345345345
     # comparison
@@ -109,11 +114,41 @@ end
     @test contains(msg, "z")
     @test contains(msg, "<")
     @test !contains(msg, string(x))
+end
 
-    err = @catch_exception_object @argcheck false MyExoticError(1,2)
-    @test err === MyExoticError(1,2)
-    
+@testset "error message call" begin
+    x = 1.2
+    y = 1.34
+    z = -345.234
+    err = @catch_exception_object @argcheck f([x y; z z])
+    msg = err.msg
+    @test contains(msg, string(x))
+    @test contains(msg, string(z))
+    @test contains(msg, string(y))
+    @test contains(msg, "y")
+    @test contains(msg, "z")
+    @test contains(msg, "x")
+    @test contains(msg, "f")
+
+    fail_function(args...) = false
+    err = @catch_exception_object @argcheck fail_function(x,y,z) DimensionMismatch
+    msg = err.msg
+
+    @test err isa DimensionMismatch
+    @test contains(msg, string(x))
+    @test contains(msg, string(z))
+    @test contains(msg, string(y))
+    @test contains(msg, "y")
+    @test contains(msg, "z")
+    @test contains(msg, "x")
+    @test contains(msg, "fail_function")
+end
+
+@testset "deprecate" begin
+
     # deprecate
     err = @catch_exception_object @argcheck false MyExoticError 1 2
     @test err === MyExoticError(1,2)
+    x = 0
+    @test_throws ArgumentError @argcheck x > 1 "this should not happen"
 end
