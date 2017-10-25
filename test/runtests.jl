@@ -25,6 +25,7 @@ import ArgCheck: is_comparison_call, canonicalize
     @test is_comparison_call(:(1==2))
     @test is_comparison_call(:(f(2x) + 1 ≈ f(x)))
     @test is_comparison_call(:(<(2,3)))
+    @test is_comparison_call(:(1 ≦ 2))
     @test !is_comparison_call(:(f(1,1)))
 
     ex = :(x1 < x2)
@@ -114,6 +115,15 @@ end
     @test contains(msg, "z")
     @test contains(msg, "<")
     @test !contains(msg, string(x))
+
+    ≦(a,b) = false
+    err = @catch_exception_object @argcheck x ≦ y ≦ z
+    msg = err.msg
+    @test contains(msg, "x")
+    @test contains(msg, "y")
+    @test contains(msg, string(x))
+    @test contains(msg, string(y))
+    @test contains(msg, "≦")
 end
 
 @testset "error message call" begin

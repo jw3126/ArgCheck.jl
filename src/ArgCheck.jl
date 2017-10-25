@@ -17,7 +17,7 @@ end
 ```
 """
 macro argcheck(code,args...)
-    esc(argcheck(code, args...))
+    argcheck(code, args...)
 end
 
 function argcheck(ex, args...)
@@ -35,17 +35,17 @@ end
 
 function argcheck_fallback(ex, args...)
     quote
-        if !($ex)
-            err = ArgCheck.build_error($(QuoteNode(ex)), $(args...))
+        if !$(esc(ex))
+            err = ArgCheck.build_error($(QuoteNode(ex)), $(esc.(args)...))
             throw(err)
         end
     end
 end
 
 function argcheck_call(ex, args...)
-    variables = map(i -> gensym("v$i"), 1:length(ex.args))
+    variables = [gensym() for _ in 1:length(ex.args)]
     assignments = map(variables, ex.args) do vi, exi
-        Expr(:(=), vi, exi)
+        Expr(:(=), vi, esc(exi))
     end
     condition = Expr(:call, variables...)
     values = :([$(variables...)])
@@ -54,7 +54,7 @@ function argcheck_call(ex, args...)
         QuoteNode(ex),
         QuoteNode(ex.args),
         values,
-        args...
+        esc.(args)...
     )
     quote
         $(assignments...)
@@ -64,15 +64,14 @@ function argcheck_call(ex, args...)
     end
 end
 
-
 function argcheck_comparison(ex, args...)
     exprs = ex.args[1:2:end]
     ops = ex.args[2:2:end]
-    variables = map(gensym, [string("v$i") for i in 1:length(exprs)])
+    variables = [gensym() for _ in 1:length(exprs)]
     ret = quote end
     rhs = exprs[1]
     vrhs = variables[1]
-    assignment = Expr(:(=), vrhs, rhs)
+    assignment = Expr(:(=), vrhs, esc(rhs))
     push!(ret.args, assignment)
     for i in eachindex(ops)
         op = ops[i]
@@ -80,12 +79,12 @@ function argcheck_comparison(ex, args...)
         vlhs = vrhs
         rhs = exprs[i+1]
         vrhs = variables[i+1]
-        assignment = Expr(:(=), vrhs, rhs)
-        condition = Expr(:call, op, vlhs, vrhs)
+        assignment = Expr(:(=), vrhs, esc(rhs))
+        condition = Expr(:call, esc(op), vlhs, vrhs)
         code = Expr(:call, op, lhs, rhs)
         err = Expr(:call, :(ArgCheck.build_error_comparison), 
             QuoteNode(code), QuoteNode(lhs), QuoteNode(rhs), 
-            vlhs, vrhs, args...)
+            vlhs, vrhs, esc.(args)...)
         reti = quote
             $assignment
             if !($condition)
@@ -96,7 +95,6 @@ function argcheck_comparison(ex, args...)
     end
     ret
 end
-
 
 function build_error(code, T::Type{<:Exception}, args...) 
     ret = T(args...)
