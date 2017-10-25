@@ -77,7 +77,8 @@ op() = (x,y) -> x < y
 x = 1; y = 2
 @argcheck op()(x,y)
 @test_throws ArgumentError @argcheck op()(y,x)
-   
+@test_throws ArgumentError @argcheck begin false end
+@test_throws DivideError @argcheck f() DivideError()
 
 struct MyExoticError <: Exception
     a::Int
