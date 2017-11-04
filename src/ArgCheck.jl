@@ -1,5 +1,6 @@
 __precompile__()
 module ArgCheck
+using Base.Meta
 export @argcheck
 
 """
@@ -22,15 +23,22 @@ end
 
 function argcheck(ex, args...)
     ex = canonicalize(ex)
-    if !isa(ex, Expr)
-        argcheck_fallback(ex, args...)
-    elseif ex.head == :comparison
+    if isexpr(ex, :comparison)
         argcheck_comparison(ex, args...)
-    elseif ex.head == :call
+    elseif is_simple_call(ex)
         argcheck_call(ex, args...)
     else
         argcheck_fallback(ex, args...)
     end
+end
+
+function is_simple_call(ex)
+    isexpr(ex, :call) || return false
+    for arg in ex.args
+        isexpr(arg,:parameters) && return false
+        isexpr(arg,:kw) && return false
+    end
+    true
 end
 
 function argcheck_fallback(ex, args...)
@@ -133,8 +141,8 @@ function fancy_error_message(code, exprs, values)
     join(lines, '\n')
 end
 
-function is_comparison_call(ex::Expr)
-    ex.head == :call &&
+function is_comparison_call(ex)
+    isexpr(ex, :call) &&
     length(ex.args) == 3 &&
     is_comparison_op(ex.args[1])
 end
