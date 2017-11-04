@@ -155,6 +155,11 @@ end
     @test contains(msg, "fail_function")
 end
 
+@testset "keyword arguments" begin
+    @argcheck issorted([2,1], rev=true)
+    @argcheck issorted([2,1]; rev=true)
+end
+
 @testset "deprecate" begin
 
     # deprecate
