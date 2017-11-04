@@ -130,7 +130,7 @@ build_error_with_fancy_message(code, variables, values, args...) = build_error(c
 end
 
 function fancy_error_message(code, exprs, values)
-    lines = ["$code must hold. Got"]
+    lines = String[]
     foreach(exprs, values) do ex, val
         sex = string(ex)
         sval = string(val)
@@ -138,6 +138,12 @@ function fancy_error_message(code, exprs, values)
             push!(lines, "$sex => $sval")
         end
     end
+    firstline = if isempty(lines)
+        "$code must hold."
+    else
+        "$code must hold. Got"
+    end
+    unshift!(lines, firstline)
     join(lines, '\n')
 end
 
