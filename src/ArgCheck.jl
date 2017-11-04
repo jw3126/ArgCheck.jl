@@ -35,8 +35,9 @@ end
 function is_simple_call(ex)
     isexpr(ex, :call) || return false
     for arg in ex.args
-        isexpr(arg,:parameters) && return false
-        isexpr(arg,:kw) && return false
+        isexpr(arg, :parameters) && return false
+        isexpr(arg, :kw) && return false
+        isexpr(arg, Symbol("...")) && return false
     end
     true
 end
