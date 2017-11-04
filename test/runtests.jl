@@ -159,9 +159,11 @@ end
     @test !contains(err.msg, "Got")
 end
 
-@testset "keyword arguments" begin
+@testset "complicated calls" begin
     @argcheck issorted([2,1], rev=true)
     @argcheck issorted([2,1]; rev=true)
+    xs = [[1,2]]
+    @argcheck issorted(xs...)
 end
 
 @testset "deprecate" begin
