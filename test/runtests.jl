@@ -152,7 +152,11 @@ end
     @test contains(msg, "y")
     @test contains(msg, "z")
     @test contains(msg, "x")
+    @test contains(msg, "Got")
     @test contains(msg, "fail_function")
+
+    err = @catch_exception_object @argcheck issorted([2,1])
+    @test !contains(err.msg, "Got")
 end
 
 @testset "keyword arguments" begin
