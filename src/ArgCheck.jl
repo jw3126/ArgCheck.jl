@@ -111,9 +111,7 @@ function build_error(code, T::Type{<:Exception}, args...)
     ret 
 end
 function build_error(code, msg::AbstractString)
-    ret = ArgumentError(msg)
-    warn("`@argcheck condition \"$msg\"` is deprecated. Use `@argcheck condition $ret` instead")
-    ret
+    ArgumentError(msg)
 end
 build_error(code, T::Type{<:Exception}=ArgumentError) = T("$code must hold.")
 build_error(code, err::Exception) = err
