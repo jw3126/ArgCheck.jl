@@ -166,11 +166,15 @@ end
     @argcheck issorted(xs...)
 end
 
+@testset "custom message" begin
+    x = 0
+    @test_throws ArgumentError @argcheck x > 1 "this should not happen"
+    @argcheck true "this should not happen"
+end
+
 @testset "deprecate" begin
 
     # deprecate
     err = @catch_exception_object @argcheck false MyExoticError 1 2
     @test err === MyExoticError(1,2)
-    x = 0
-    @test_throws ArgumentError @argcheck x > 1 "this should not happen"
 end
