@@ -1,0 +1,3 @@
+using PkgBenchmark
+
+benchmarkpkg("ArgCheck")
