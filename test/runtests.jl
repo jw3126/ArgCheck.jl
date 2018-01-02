@@ -91,6 +91,7 @@ truthy(args...) = true
         falsy(1,2)
     end DimensionMismatch
 
+    
     op() = (x,y) -> x < y
     x = 1; y = 2
     @argcheck op()(x,y)
@@ -136,7 +137,11 @@ end
     @test contains(msg, "≦")
 end
 
-@testset "error message call" begin
+# In 
+# We can't wrap this in @testset on julia v0.6
+# because of https://github.com/JuliaLang/julia/issues/24316
+# @testset "error message call" begin
+let
     x = 1.2
     y = 1.34
     z = -345.234
