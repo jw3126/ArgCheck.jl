@@ -22,7 +22,6 @@ macro argcheck(code,args...)
 end
 
 function argcheck(ex, args...)
-    ex = canonicalize(ex)
     if isexpr(ex, :comparison)
         argcheck_comparison(ex, args...)
     elseif is_simple_call(ex)
@@ -67,7 +66,9 @@ function argcheck_call(ex, args...)
     )
     quote
         $(assignments...)
-        if !($condition)
+        if $condition
+            nothing
+        else
             throw($err)
         end
     end
@@ -77,11 +78,11 @@ function argcheck_comparison(ex, args...)
     exprs = ex.args[1:2:end]
     ops = ex.args[2:2:end]
     variables = [gensym() for _ in 1:length(exprs)]
-    ret = quote end
+    ret = []
     rhs = exprs[1]
     vrhs = variables[1]
     assignment = Expr(:(=), vrhs, esc(rhs))
-    push!(ret.args, assignment)
+    push!(ret, assignment)
     for i in eachindex(ops)
         op = ops[i]
         lhs = rhs
@@ -96,13 +97,15 @@ function argcheck_comparison(ex, args...)
             vlhs, vrhs, esc.(args)...)
         reti = quote
             $assignment
-            if !($condition)
+            if $condition
+                nothing
+            else
                 throw($err)
             end
         end
-        append!(ret.args, reti.args)
+        append!(ret, reti.args)
     end
-    ret
+    Expr(:block, ret...)
 end
 
 function build_error(code, T::Type{<:Exception}, args...) 

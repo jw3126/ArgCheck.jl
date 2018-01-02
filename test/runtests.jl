@@ -68,28 +68,37 @@ end
 end
 
 # exotic cases
-f(args...) = false
-t(args...) = true
-@argcheck t()
-@test_throws ArgumentError @argcheck f()
-
-op() = (x,y) -> x < y
-x = 1; y = 2
-@argcheck op()(x,y)
-@test_throws ArgumentError @argcheck op()(y,x)
-@test_throws ArgumentError @argcheck begin false end
-@test_throws DivideError @argcheck f() DivideError()
-
+struct MyError <: Exception
+    msg::String
+end
 struct MyExoticError <: Exception
     a::Int
     b::Int
 end
 
-err = @catch_exception_object @argcheck false MyExoticError(1,2)
-@test err === MyExoticError(1,2)
+falsy(args...) = false
+truthy(args...) = true
 
-struct MyError <: Exception
-    msg::String
+@testset "exotic cases" begin
+    @argcheck truthy()
+    @test_throws ArgumentError @argcheck falsy()
+
+    @argcheck begin
+        multi_line_true_is_no_problem = true
+        multi_line_true_is_no_problem
+    end
+    @test_throws DimensionMismatch @argcheck let
+        falsy(1,2)
+    end DimensionMismatch
+
+    op() = (x,y) -> x < y
+    x = 1; y = 2
+    @argcheck op()(x,y)
+    @test_throws ArgumentError @argcheck op()(y,x)
+    @test_throws ArgumentError @argcheck begin false end
+    @test_throws DivideError @argcheck falsy() DivideError()
+    err = @catch_exception_object @argcheck false MyExoticError(1,2)
+    @test err === MyExoticError(1,2)
 end
 
 @testset "error message comparison" begin
@@ -131,7 +140,7 @@ end
     x = 1.2
     y = 1.34
     z = -345.234
-    err = @catch_exception_object @argcheck f([x y; z z])
+    err = @catch_exception_object @argcheck falsy([x y; z z])
     msg = err.msg
     @test contains(msg, string(x))
     @test contains(msg, string(z))
