@@ -18,7 +18,6 @@ end
 ```
 """
 macro argcheck(ex, options...)
-    ex = canonicalize(ex)
     if isexpr(ex, :comparison)
         argcheck_comparison(ex, options...)
     elseif is_simple_call(ex)
@@ -146,26 +145,5 @@ function fancy_error_message(code, exprs, values)
     end
     unshift!(lines, firstline)
     join(lines, '\n')
-end
-
-function is_comparison_call(ex)
-    isexpr(ex, :call) &&
-    length(ex.args) == 3 &&
-    is_comparison_op(ex.args[1])
-end
-is_comparison_op(op) = false
-function is_comparison_op(op::Symbol)
-    precedence = 6 # does this catch all comparisons?
-    Base.operator_precedence(op) == precedence
-end
-
-canonicalize(x) = x
-function canonicalize(ex::Expr)
-    if is_comparison_call(ex)
-        op, lhs, rhs = ex.args
-        Expr(:comparison, lhs, op, rhs)
-    else
-        ex
-    end
 end
 end

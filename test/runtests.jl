@@ -20,22 +20,6 @@ macro catch_exception_object(code)
     end
 end
 
-import ArgCheck: is_comparison_call, canonicalize
-@testset "helper functions" begin
-    @test is_comparison_call(:(1==2))
-    @test is_comparison_call(:(f(2x) + 1 ≈ f(x)))
-    @test is_comparison_call(:(<(2,3)))
-    @test is_comparison_call(:(1 ≦ 2))
-    @test !is_comparison_call(:(f(1,1)))
-
-    ex = :(x1 < x2)
-    @test canonicalize(ex) != ex
-    @test canonicalize(ex) == Expr(:comparison, :x1, :(<), :x2)
-
-    ex = :(det(x) < y < z)
-    @test canonicalize(ex) == ex
-end
-
 @testset "Chained comparisons" begin
     #6
     x=y=z = 1
