@@ -40,15 +40,12 @@ struct FallbackErrorInfo <: AbstractErrorInfo
     options
 end
 
-AbstractCodeFlavor(::CallErrorInfo) = CallFlavor()
-AbstractCodeFlavor(::ComparisonErrorInfo) = ComparisonFlavor()
-AbstractCodeFlavor(::FallbackErrorInfo) = FallbackFlavor()
-
 """
     @argcheck
 
-Macro for checking invariants on function arguments.
-It can be used as follows:
+Check invariants on function arguments and produce
+a nice exception message if they are violated.
+Usage is as follows:
 ```Julia
 function myfunction(k,n,A,B)
     @argcheck k > n
@@ -56,13 +53,26 @@ function myfunction(k,n,A,B)
     @argcheck det(A) < 0 DomainError()
     # doit
 end
-
-See also [`@check`](@ref).
 ```
+See also [`@check`](@ref).
 """
 macro argcheck(ex, options...)
     check(ex, ArgCheckFlavor(), options...)
 end
+
+"""
+    @check
+
+Check that a condition holds
+and produce a nice exception message, if it does not.
+Usage is as follows:
+```Julia
+@check k > n
+@check size(A) == size(B) DimensionMismatch
+@check det(A) < 0 DomainError()
+```
+See also [`@argcheck`](@ref).
+"""
 macro check(ex, options...)
     check(ex, CheckFlavor(), options...)
 end
@@ -78,7 +88,6 @@ function check(ex, checkflavor, options...)
     checker = Checker(ex, checkflavor, codeflavor, options)
     check(checker, codeflavor)
 end
-
 
 function is_simple_call(ex)
     isexpr(ex, :call) || return false
