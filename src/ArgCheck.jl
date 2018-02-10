@@ -110,9 +110,8 @@ function check(c, ::FallbackFlavor)
 end
 
 function check(c, ::CallFlavor)
-    ex = c.code
-    variables = [gensym() for _ in 1:length(ex.args)]
-    assignments = map(variables, ex.args) do vi, exi
+    variables = [gensym() for _ in 1:length(c.code.args)]
+    assignments = map(variables, c.code.args) do vi, exi
         Expr(:(=), vi, esc(exi))
     end
     condition = Expr(:call, variables...)
