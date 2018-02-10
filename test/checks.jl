@@ -52,8 +52,8 @@ struct MyExoticError <: Exception
     b::Int
 end
 
-falsy(args...) = false
-truthy(args...) = true
+falsy(args...;kw...) = false
+truthy(args...;kw...) = true
 
 @testset "exotic cases" begin
     @argcheck truthy()
@@ -153,6 +153,15 @@ end
     @argcheck issorted([2,1]; rev=true)
     xs = [[1,2]]
     @argcheck issorted(xs...)
+
+    @argcheck truthy(xs...,xs...)
+    @test_throws MyError @argcheck falsy(xs...,xs...) MyError
+
+    kw1 = Dict(:x =>1)
+    kw2 = Dict(:y =>2)
+    @argcheck truthy(;kw1...)
+    @argcheck truthy(;kw1..., kw2...)
+    @test_throws MyError @argcheck falsy(cos, xs...,xs...;kw1...,kw2...,foo=3) MyError
 end
 
 @testset "custom message" begin
