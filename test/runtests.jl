@@ -170,9 +170,10 @@ end
     @argcheck true "this should not happen"
 end
 
-@testset "deprecate" begin
-
-    # deprecate
-    err = @catch_exception_object @argcheck false MyExoticError 1 2
-    @test err === MyExoticError(1,2)
+@testset "@check" begin
+    @check true
+    E = ErrorException
+    @test_throws E @check false
+    @test_throws E @check false "oh no"
+    @test_throws DimensionMismatch @check false DimensionMismatch
 end
