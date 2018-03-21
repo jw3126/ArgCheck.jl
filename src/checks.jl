@@ -1,3 +1,6 @@
+struct CheckError <: Exception
+    msg::String
+end
 abstract type AbstractCheckFlavor end
 struct ArgCheckFlavor <: AbstractCheckFlavor end
 struct CheckFlavor    <: AbstractCheckFlavor end
@@ -164,7 +167,7 @@ function expr_error_block(info, condition, preamble...)
 end
 
 default_exception_type(::ArgCheckFlavor) = ArgumentError
-default_exception_type(::CheckFlavor) = ErrorException
+default_exception_type(::CheckFlavor) = CheckError
 
 function build_error(info)
     build_error(info, info.checkflavor, info.options...)
@@ -187,14 +190,27 @@ error_message(info::FallbackErrorInfo) = "$(info.code) must hold."
 error_message(info::CallErrorInfo) = fancy_error_message(info)
 error_message(info::ComparisonErrorInfo) = fancy_error_message(info)
 
+function pretty_string(data)
+    io = IOBuffer()
+    ioc = IOContext(io; limit=true, compact=true)
+    show(ioc, data)
+    seekstart(io)
+    String(take!(io))
+end
+pretty_string(x::Number) = string(x)
+pretty_string(s::Symbol) = string(s)
+pretty_string(ex::Expr) = string(ex)
+
 function fancy_error_message(info)
     code = info.code
     exprs = info.argument_expressions
     values = info.argument_values
     lines = String[]
     foreach(exprs, values) do ex, val
-        if string(ex) != string(val)
-            push!(lines, "$ex => $val")
+        pex = pretty_string(ex)
+        pval = pretty_string(val)
+        if pex != pval
+            push!(lines, "$pex => $pval")
         end
     end
     firstline = if isempty(lines)

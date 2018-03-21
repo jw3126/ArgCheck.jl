@@ -1,3 +1,4 @@
+using ArgCheck: pretty_string
 macro catch_exception_object(code)
     quote
         err = try
@@ -77,12 +78,12 @@ truthy(args...;kw...) = true
     @test err === MyExoticError(1,2)
 end
 
-@testset "error message comparison" begin
+@testset "error messages" begin
     x = 1.23455475675
     y = 2.345345345
     # comparison
     err = @catch_exception_object @argcheck x == y MyError
-    @test isa(err, MyError)
+    @test err isa MyError
     msg = err.msg
     @test contains(msg, string(x))
     @test contains(msg, string(y))
@@ -110,6 +111,17 @@ end
     @test contains(msg, string(x))
     @test contains(msg, string(y))
     @test contains(msg, "≦")
+
+    s = randstring()
+    arr = rand(1000:9999, 1000)
+    x = randn()
+    err = @catch_exception_object @check falsy(x, arr, s)
+    @test typeof(err) == CheckError
+    msg = err.msg
+    @test length(msg) < 2000
+    @test contains(msg, pretty_string(x))
+    @test contains(msg, pretty_string(arr))
+    @test contains(msg, pretty_string(s))
 end
 
 # In 
@@ -172,8 +184,22 @@ end
 
 @testset "@check" begin
     @check true
-    E = ErrorException
+    E = CheckError
     @test_throws E @check false
     @test_throws E @check false "oh no"
     @test_throws DimensionMismatch @check false DimensionMismatch
+end
+
+@testset "pretty_string" begin
+    @test pretty_string("asd") == "\"asd\""
+    
+    data = rand(10000:99999, 1000)
+    str = pretty_string(data)
+    @test length(str) < 1000
+    @test contains(str, string(last(data)))
+    @test contains(str, string(first(data)))
+    @test !contains(str, "\n")
+    
+    data = randn()
+    @test parse(Float64,pretty_string(data)) === data
 end
