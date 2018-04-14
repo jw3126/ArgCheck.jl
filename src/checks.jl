@@ -159,9 +159,7 @@ function expr_error_block(info, condition, preamble...)
         if $condition
             nothing
         else
-            info = $info
-            err = build_error(info)
-            throw(err)
+            throw(build_error($info))
         end
     end
 end
