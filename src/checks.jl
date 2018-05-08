@@ -23,19 +23,19 @@ struct CallErrorInfo <: AbstractErrorInfo
     checkflavor::AbstractCheckFlavor
     argument_expressions::Vector
     argument_values::Vector
-    options::Vector
+    options::Tuple
 end
 struct ComparisonErrorInfo <: AbstractErrorInfo
     code
     checkflavor::AbstractCheckFlavor
     argument_expressions::Vector
     argument_values::Vector
-    options::Vector
+    options::Tuple
 end
 struct FallbackErrorInfo <: AbstractErrorInfo
     code
     checkflavor::AbstractCheckFlavor
-    options::Vector
+    options::Tuple
 end
 
 """
@@ -101,7 +101,7 @@ function check(c, ::FallbackFlavor)
     info = Expr(:call, :FallbackErrorInfo,
                 QuoteNode(c.code),
                 c.checkflavor,
-                Expr(:vect, esc.(c.options)...))
+                Expr(:tuple, esc.(c.options)...))
 
     condition = esc(c.code)
     expr_error_block(info, condition)
@@ -118,7 +118,7 @@ function check(c, ::CallFlavor)
                 c.checkflavor,
                 QuoteNode(c.code.args),
                 Expr(:vect, variables...),
-                Expr(:vect, esc.(c.options)...))
+                Expr(:tuple, esc.(c.options)...))
     expr_error_block(info, condition, assignments...)
 end
 
@@ -145,7 +145,7 @@ function check(c::Checker, ::ComparisonFlavor)
                     c.checkflavor,
                     QuoteNode([lhs, rhs]),
                     Expr(:vect, vlhs, vrhs),
-                    Expr(:vect, esc.(c.options)...))
+                    Expr(:tuple, esc.(c.options)...))
 
         reti = expr_error_block(info, condition, assignment)
         append!(ret, reti.args)
@@ -159,9 +159,7 @@ function expr_error_block(info, condition, preamble...)
         if $condition
             nothing
         else
-            info = $info
-            err = build_error(info)
-            throw(err)
+            throw(build_error($info))
         end
     end
 end
