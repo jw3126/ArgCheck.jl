@@ -190,7 +190,7 @@ error_message(info::ComparisonErrorInfo) = fancy_error_message(info)
 
 function pretty_string(data)
     io = IOBuffer()
-    ioc = IOContext(io; limit=true, compact=true)
+    ioc = IOContext(io, :limit=>true, :compact=>true)
     show(ioc, data)
     seekstart(io)
     String(take!(io))
@@ -216,6 +216,6 @@ function fancy_error_message(info)
     else
         "$code must hold. Got"
     end
-    unshift!(lines, firstline)
+    pushfirst!(lines, firstline)
     join(lines, '\n')
 end
