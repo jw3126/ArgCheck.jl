@@ -155,7 +155,7 @@ end
 
 function expr_error_block(info, condition, preamble...)
     reti = quote
-        $(preamble...)
+        $(preamble...,)
         if $condition
             nothing
         else
@@ -216,6 +216,6 @@ function fancy_error_message(info)
     else
         "$code must hold. Got"
     end
-    unshift!(lines, firstline)
+    pushfirst!(lines, firstline)
     join(lines, '\n')
 end
