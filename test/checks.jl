@@ -1,7 +1,5 @@
 using ArgCheck: pretty_string
-using Random
 
-contains(haystick, needle) = occursin(needle, haystick)
 macro catch_exception_object(code)
     quote
         err = try
