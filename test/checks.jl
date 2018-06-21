@@ -1,4 +1,5 @@
 using ArgCheck: pretty_string
+
 macro catch_exception_object(code)
     quote
         err = try
@@ -85,32 +86,32 @@ end
     err = @catch_exception_object @argcheck x == y MyError
     @test err isa MyError
     msg = err.msg
-    @test contains(msg, string(x))
-    @test contains(msg, string(y))
-    @test contains(msg, "x")
-    @test contains(msg, "y")
-    @test contains(msg, "==")
+    @test occursin(string(x), msg)
+    @test occursin(string(y), msg)
+    @test occursin("x", msg)
+    @test occursin("y", msg)
+    @test occursin("==", msg)
 
     x = 1.2
     y = 1.34
     z = -345.234
     err = @catch_exception_object @argcheck x < y < z
     msg = err.msg
-    @test contains(msg, string(z))
-    @test contains(msg, string(y))
-    @test contains(msg, "y")
-    @test contains(msg, "z")
-    @test contains(msg, "<")
-    @test !contains(msg, string(x))
+    @test occursin(string(z), msg)
+    @test occursin(string(y), msg)
+    @test occursin("y", msg)
+    @test occursin("z", msg)
+    @test occursin("<", msg)
+    @test !occursin(string(x), msg)
 
     ≦(a,b) = false
     err = @catch_exception_object @argcheck x ≦ y ≦ z
     msg = err.msg
-    @test contains(msg, "x")
-    @test contains(msg, "y")
-    @test contains(msg, string(x))
-    @test contains(msg, string(y))
-    @test contains(msg, "≦")
+    @test occursin("x", msg)
+    @test occursin("y", msg)
+    @test occursin(string(x), msg)
+    @test occursin(string(y), msg)
+    @test occursin("≦", msg)
 
     s = randstring()
     arr = rand(1000:9999, 1000)
@@ -119,9 +120,9 @@ end
     @test typeof(err) == CheckError
     msg = err.msg
     @test length(msg) < 2000
-    @test contains(msg, pretty_string(x))
-    @test contains(msg, pretty_string(arr))
-    @test contains(msg, pretty_string(s))
+    @test occursin(pretty_string(x), msg)
+    @test occursin(pretty_string(arr), msg)
+    @test occursin(pretty_string(s), msg)
 end
 
 # In 
@@ -134,30 +135,30 @@ let
     z = -345.234
     err = @catch_exception_object @argcheck falsy([x y; z z])
     msg = err.msg
-    @test contains(msg, string(x))
-    @test contains(msg, string(z))
-    @test contains(msg, string(y))
-    @test contains(msg, "y")
-    @test contains(msg, "z")
-    @test contains(msg, "x")
-    @test contains(msg, "f")
+    @test occursin(string(x), msg)
+    @test occursin(string(z), msg)
+    @test occursin(string(y), msg)
+    @test occursin("y", msg)
+    @test occursin("z", msg)
+    @test occursin("x", msg)
+    @test occursin("f", msg)
 
     fail_function(args...) = false
     err = @catch_exception_object @argcheck fail_function(x,y,z) DimensionMismatch
     msg = err.msg
 
     @test err isa DimensionMismatch
-    @test contains(msg, string(x))
-    @test contains(msg, string(z))
-    @test contains(msg, string(y))
-    @test contains(msg, "y")
-    @test contains(msg, "z")
-    @test contains(msg, "x")
-    @test contains(msg, "Got")
-    @test contains(msg, "fail_function")
+    @test occursin(string(x), msg)
+    @test occursin(string(z), msg)
+    @test occursin(string(y), msg)
+    @test occursin("y", msg)
+    @test occursin("z", msg)
+    @test occursin("x", msg)
+    @test occursin("Got", msg)
+    @test occursin("fail_function", msg)
 
     err = @catch_exception_object @argcheck issorted([2,1])
-    @test !contains(err.msg, "Got")
+    @test !occursin("Got", err.msg)
 end
 
 @testset "complicated calls" begin
@@ -196,9 +197,9 @@ end
     data = rand(10000:99999, 1000)
     str = pretty_string(data)
     @test length(str) < 1000
-    @test contains(str, string(last(data)))
-    @test contains(str, string(first(data)))
-    @test !contains(str, "\n")
+    @test occursin(string(last(data)), str)
+    @test occursin(string(first(data)),str)
+    @test !occursin("\n",str)
     
     data = randn()
     @test parse(Float64,pretty_string(data)) === data

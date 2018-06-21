@@ -8,7 +8,7 @@ function fallback_argcheck(x)
     @argcheck x
 end
 function comparison_argcheck(x)
-    @argcheck x == 42
+    @argcheck x == x
 end
 function call_argcheck(x)
     @argcheck truthy(x)
@@ -17,7 +17,7 @@ function fallback_assert(x)
     @assert x
 end
 function comparison_assert(x)
-    @assert x == 42
+    @assert x == x
 end
 function call_assert(x)
     @assert truthy(x)
