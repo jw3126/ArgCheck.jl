@@ -189,6 +189,9 @@ end
     @test_throws E @check false
     @test_throws E @check false "oh no"
     @test_throws DimensionMismatch @check false DimensionMismatch
+    s = randstring()
+    msg = sprint(showerror, CheckError(s))
+    @test msg == "CheckError: $s"
 end
 
 @testset "pretty_string" begin

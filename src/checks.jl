@@ -1,6 +1,9 @@
 struct CheckError <: Exception
     msg::String
 end
+
+Base.showerror(io::IO, err::CheckError) = print(io, "CheckError: $(err.msg)")
+
 abstract type AbstractCheckFlavor end
 struct ArgCheckFlavor <: AbstractCheckFlavor end
 struct CheckFlavor    <: AbstractCheckFlavor end
