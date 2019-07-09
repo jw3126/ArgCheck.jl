@@ -153,6 +153,22 @@ end
 
     err = @catch_exception_object @argcheck issorted([2,1])
     @test !occursin("Got", err.msg)
+
+    z = "some_keyword_arg"
+    err = @catch_exception_object @argcheck falsy(x=z)
+    @test occursin("z", err.msg)
+    @test_broken occursin(z, err.msg)
+
+    args = ["these", "are", "splatargs"]
+    err = @catch_exception_object @argcheck falsy(args...)
+    @test occursin("args", err.msg)
+    @test_broken occursin(args[1], err.msg)
+
+    myatol = 0.1
+    err = @catch_exception_object @argcheck isapprox(1,2,atol=myatol)
+    @test occursin("atol", err.msg)
+    @test_broken occursin("0.1", err.msg)
+
 end
 
 @testset "complicated calls" begin
