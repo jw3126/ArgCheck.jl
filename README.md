@@ -26,6 +26,6 @@ You can also customize the error:
 ```Julia
 @argcheck k > n
 @argcheck size(A) == size(B) DimensionMismatch
-@argcheck det(A) < 0 DomainError()
+@argcheck det(A) < 0 DomainError
 @argcheck false MyCustomError(my, args...)
 ```
