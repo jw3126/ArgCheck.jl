@@ -31,7 +31,7 @@ You can also customize the error:
 ```
 
 ### Performance
-`@argcheck code` is as fast as `@assert` or a hand written `if. That being said it is possible to erase argchecks, much like one can erase bounds checking using `@inbounds`. This is implemented in [OptionalArgChecks.jl](https://github.com/simeonschaub/OptionalArgChecks.jl):
+`@argcheck code` is as fast as `@assert` or a hand written `if`. That being said it is possible to erase argchecks, much like one can erase bounds checking using `@inbounds`. This is implemented in [OptionalArgChecks.jl](https://github.com/simeonschaub/OptionalArgChecks.jl):
 
 ```julia
 using OptionalArgChecks # this also reexports ArgCheck.jl for convenience
