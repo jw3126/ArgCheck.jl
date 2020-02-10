@@ -2,15 +2,17 @@ struct CheckError <: Exception
     msg::String
 end
 
-const MARKER_BEGIN_CHECK = :begin_argcheck
-const MARKER_END_CHECK = :end_argcheck
+const MARKER = :argcheck
+
+const MARKER_BEGIN_CHECK = Expr(:meta, :begin_optional, :argcheck)
+const MARKER_END_CHECK = Expr(:meta, :end_optional, :argcheck)
 
 function mark_check(code)
     # Mark a code block as check, for usage with OptionalArgChecks.jl
     Expr(:block,
-      Expr(:meta, MARKER_BEGIN_CHECK),
-      code,
-      Expr(:meta, MARKER_END_CHECK),
+        MARKER_BEGIN_CHECK,
+        code,
+        MARKER_END_CHECK,
      )
 end
 
