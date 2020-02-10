@@ -1,10 +1,9 @@
 name = "ArgCheck"
 uuid = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 license = "MIT"
-version = "1.0.1"
+version = "1.1"
 
 [deps]
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 julia = "≥ 1.0.0"

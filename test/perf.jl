@@ -1,3 +1,4 @@
+module Perf
 # compare performance with plain assertion
 using BenchmarkTools
 using ArgCheck
@@ -35,3 +36,5 @@ for (f_argcheck, f_assert, arg) in benchmarks
     println(f_assert)
     @btime ($f_assert)($arg)
 end
+
+end#module
