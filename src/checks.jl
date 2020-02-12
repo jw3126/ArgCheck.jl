@@ -2,6 +2,20 @@ struct CheckError <: Exception
     msg::String
 end
 
+const MARKER = :argcheck
+
+const MARKER_BEGIN_CHECK = Expr(:meta, :begin_optional, :argcheck)
+const MARKER_END_CHECK = Expr(:meta, :end_optional, :argcheck)
+
+function mark_check(code)
+    # Mark a code block as check, for usage with OptionalArgChecks.jl
+    Expr(:block,
+        MARKER_BEGIN_CHECK,
+        code,
+        MARKER_END_CHECK,
+     )
+end
+
 Base.showerror(io::IO, err::CheckError) = print(io, "CheckError: $(err.msg)")
 
 abstract type AbstractCheckFlavor end
@@ -87,7 +101,8 @@ function check(ex, checkflavor, options...)
         FallbackFlavor()
     end
     checker = Checker(ex, checkflavor, codeflavor, options)
-    check(checker, codeflavor)
+    inner = check(checker, codeflavor)
+    mark_check(inner)
 end
 
 function is_simple_call(ex)

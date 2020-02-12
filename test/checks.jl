@@ -1,4 +1,8 @@
+module TestChecks
+using Test
+using ArgCheck
 using ArgCheck: pretty_string
+using Random: randstring
 
 macro catch_exception_object(code)
     quote
@@ -25,7 +29,7 @@ end
 
     @test_throws ArgumentError @argcheck 1 ≈ 2 == 2
     @argcheck 1 == 1 ≈ 1 < 2 > 1.2
-    @test_throws DimensionMismatch @argcheck 1 < 2 ==3 DimensionMismatch 
+    @test_throws DimensionMismatch @argcheck 1 < 2 ==3 DimensionMismatch
 end
 
 @testset "@argcheck" begin
@@ -35,11 +39,11 @@ end
     x = 1
     @test_throws ArgumentError (@argcheck x > 1)
     @argcheck x>0 # does not throw
-    
+
     n =2; m=3
     @test_throws DimensionMismatch (@argcheck n==m DimensionMismatch)
     @argcheck n==n DimensionMismatch
-    
+
     denominator = 0
     @test_throws DivideError (@argcheck denominator != 0 DivideError())
     @argcheck 1 !=0 DivideError()
@@ -206,14 +210,33 @@ end
 
 @testset "pretty_string" begin
     @test pretty_string("asd") == "\"asd\""
-    
+
     data = rand(10000:99999, 1000)
     str = pretty_string(data)
     @test length(str) < 1000
     @test occursin(string(last(data)), str)
     @test occursin(string(first(data)),str)
     @test !occursin("\n",str)
-    
+
     data = randn()
     @test parse(Float64,pretty_string(data)) === data
 end
+
+@testset "marker" begin
+    for ex in [
+            :(@argcheck some_expr),
+            :(@check some_expr),
+            :(@check A < b),
+            :(@check A < b MyError),
+        ]
+        ex = macroexpand(TestChecks, ex)
+        @test Meta.isexpr(ex, :block)
+        @test first(ex.args) == ArgCheck.MARKER_BEGIN_CHECK
+        @test last(ex.args) == ArgCheck.MARKER_END_CHECK
+    end
+    @test ArgCheck.MARKER_BEGIN_CHECK != ArgCheck.MARKER_END_CHECK
+    @test Meta.isexpr(ArgCheck.MARKER_BEGIN_CHECK, :meta)
+    @test Meta.isexpr(ArgCheck.MARKER_END_CHECK, :meta)
+end
+
+end#module
