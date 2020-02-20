@@ -38,5 +38,7 @@ using OptionalArgChecks # this also reexports ArgCheck.jl for convenience
 
 f(x) = @argcheck x > 0
 
-@unsafe_skipargcheck f(-1) # see OptionalArgChecks docs for why this is called unsafe
+@unsafe_skipargcheck f(-1)
 ```
+This feature is currently experimental. It may be silently changed or removed without increasing the major ArgCheck version number.
+See the OptionalArgChecks documentation for some of the caveats.
