@@ -1,4 +1,5 @@
-const LABEL_ARGCHECK = Symbol("###ArgCheck.LABEL_ARGCHECK###")
+struct LabelArgCheck end
+const LABEL_ARGCHECK = LabelArgCheck()
 
 const LABEL_BEGIN_CHECK = Expr(:meta, :begin_optional, LABEL_ARGCHECK)
 const LABEL_END_CHECK = Expr(:meta, :end_optional, LABEL_ARGCHECK)
