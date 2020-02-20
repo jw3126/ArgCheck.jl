@@ -231,12 +231,12 @@ end
         ]
         ex = macroexpand(TestChecks, ex)
         @test Meta.isexpr(ex, :block)
-        @test first(ex.args) == ArgCheck.MARKER_BEGIN_CHECK
-        @test last(ex.args) == ArgCheck.MARKER_END_CHECK
+        @test first(ex.args) == ArgCheck.LABEL_BEGIN_CHECK
+        @test last(ex.args) == ArgCheck.LABEL_END_CHECK
     end
-    @test ArgCheck.MARKER_BEGIN_CHECK != ArgCheck.MARKER_END_CHECK
-    @test Meta.isexpr(ArgCheck.MARKER_BEGIN_CHECK, :meta)
-    @test Meta.isexpr(ArgCheck.MARKER_END_CHECK, :meta)
+    @test ArgCheck.LABEL_BEGIN_CHECK != ArgCheck.LABEL_END_CHECK
+    @test Meta.isexpr(ArgCheck.LABEL_BEGIN_CHECK, :meta)
+    @test Meta.isexpr(ArgCheck.LABEL_END_CHECK, :meta)
 end
 
 end#module

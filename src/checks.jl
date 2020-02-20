@@ -1,21 +1,21 @@
-struct CheckError <: Exception
-    msg::String
-end
+struct LabelArgCheck end
+const LABEL_ARGCHECK = LabelArgCheck()
 
-const MARKER = :argcheck
-
-const MARKER_BEGIN_CHECK = Expr(:meta, :begin_optional, :argcheck)
-const MARKER_END_CHECK = Expr(:meta, :end_optional, :argcheck)
+const LABEL_BEGIN_CHECK = Expr(:meta, :begin_optional, LABEL_ARGCHECK)
+const LABEL_END_CHECK = Expr(:meta, :end_optional, LABEL_ARGCHECK)
 
 function mark_check(code)
     # Mark a code block as check, for usage with OptionalArgChecks.jl
     Expr(:block,
-        MARKER_BEGIN_CHECK,
+        LABEL_BEGIN_CHECK,
         code,
-        MARKER_END_CHECK,
+        LABEL_END_CHECK,
      )
 end
 
+struct CheckError <: Exception
+    msg::String
+end
 Base.showerror(io::IO, err::CheckError) = print(io, "CheckError: $(err.msg)")
 
 abstract type AbstractCheckFlavor end
