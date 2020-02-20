@@ -38,5 +38,5 @@ using OptionalArgChecks # this also reexports ArgCheck.jl for convenience
 
 f(x) = @argcheck x > 0
 
-@skipargcheck f(-1)
+@unsafe_skipargcheck f(-1) # see OptionalArgChecks docs for why this is called unsafe
 ```
