@@ -161,17 +161,34 @@ end
     z = "some_keyword_arg"
     err = @catch_exception_object @argcheck falsy(x=z)
     @test occursin("z", err.msg)
-    @test_broken occursin(z, err.msg)
+    @test occursin(z, err.msg)
 
     args = ["these", "are", "splatargs"]
     err = @catch_exception_object @argcheck falsy(args...)
     @test occursin("args", err.msg)
-    @test_broken occursin(args[1], err.msg)
+    @test occursin(args[1], err.msg)
 
     myatol = 0.1
     err = @catch_exception_object @argcheck isapprox(1,2,atol=myatol)
     @test occursin("atol", err.msg)
-    @test_broken occursin("0.1", err.msg)
+    @test occursin("0.1", err.msg)
+
+    kw = (atol=1.34, rtol=0.02)
+    err = @catch_exception_object @argcheck isapprox(10, 20; kw...)
+    @test occursin("atol", err.msg)
+    @test occursin("1.34", err.msg)
+    @test occursin("rtol", err.msg)
+    @test occursin("0.02", err.msg)
+
+    args = (10, 20)
+    kw = (atol=1.34, rtol=0.02)
+    err = @catch_exception_object @argcheck isapprox(args...; kw...)
+    @test occursin("atol", err.msg)
+    @test occursin("1.34", err.msg)
+    @test occursin("rtol", err.msg)
+    @test occursin("0.02", err.msg)
+    @test occursin("10", err.msg)
+    @test occursin("20", err.msg)
 
 end
 
@@ -189,6 +206,22 @@ end
     @argcheck truthy(;kw1...)
     @argcheck truthy(;kw1..., kw2...)
     @test_throws MyError @argcheck falsy(cos, xs...,xs...;kw1...,kw2...,foo=3) MyError
+
+    if VERSION > v"1.4.0"
+        atol = 2
+        @argcheck isapprox(1, 2; atol)
+        @argcheck isapprox(1, 2; atol, rtol=0.2)
+        @argcheck isapprox(1, 2; :atol=>2)
+        @argcheck isapprox(1, 2; :atol=>2, rtol=0.1)
+        @argcheck isapprox(1, 2; (() -> :atol)()=>2, rtol=0.1)
+
+        foo = 3
+        foosym = :foo
+        @argcheck truthy(cos, xs...,xs...;kw1...,kw2...,foo) MyError
+        @test_throws MyError @argcheck falsy(cos, xs...,xs...;kw1...,kw2...,foo) MyError
+        @argcheck truthy(cos, xs...,xs...;kw1...,kw2...,foosym=>1) MyError
+        @test_throws MyError @argcheck falsy(cos, xs...,xs...;kw1...,kw2...,foosym=>1) MyError
+    end
 end
 
 @testset "custom message" begin
@@ -238,5 +271,6 @@ end
     @test Meta.isexpr(ArgCheck.LABEL_BEGIN_CHECK, :meta)
     @test Meta.isexpr(ArgCheck.LABEL_END_CHECK, :meta)
 end
+
 
 end#module

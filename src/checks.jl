@@ -95,7 +95,7 @@ end
 function check(ex, checkflavor, options...)
     codeflavor = if isexpr(ex, :comparison)
         ComparisonFlavor()
-    elseif is_simple_call(ex)
+    elseif isexpr(ex, :call)
         CallFlavor()
     else
         FallbackFlavor()
@@ -103,16 +103,6 @@ function check(ex, checkflavor, options...)
     checker = Checker(ex, checkflavor, codeflavor, options)
     inner = check(checker, codeflavor)
     mark_check(inner)
-end
-
-function is_simple_call(ex)
-    isexpr(ex, :call) || return false
-    for arg in ex.args
-        isexpr(arg, :parameters) && return false
-        isexpr(arg, :kw) && return false
-        isexpr(arg, Symbol("...")) && return false
-    end
-    true
 end
 
 function check(c, ::FallbackFlavor)
@@ -125,18 +115,91 @@ function check(c, ::FallbackFlavor)
     expr_error_block(info, condition)
 end
 
-function check(c, ::CallFlavor)
-    variables = [gensym() for _ in 1:length(c.code.args)]
-    assignments = map(variables, c.code.args) do vi, exi
-        Expr(:(=), vi, esc(exi))
+const SPLAT = Symbol("...")
+
+function analyze_call_arg(expr, isparameter)
+    if isexpr(expr, :kw)
+        (kind=:kw, expr=expr.args[2], key=expr.args[1], symbol=gensym("kw"), isparameter=isparameter)
+    elseif isexpr(expr, SPLAT)
+        (kind=:splat, expr=expr.args[1], symbol=gensym("splat"), isparameter=isparameter)
+    elseif isparameter
+        if expr isa Symbol
+            # e.g. ;foo
+            (kind=:kw, expr=expr, key=expr, symbol=gensym("arg"), isparameter=isparameter)
+        else
+            # e.g. ;foo => bar
+            (kind=:ghost, expr=expr, isparameter=isparameter)
+        end
+    else
+        (kind=:arg, expr=expr, symbol=gensym("arg"), isparameter=isparameter)
     end
-    condition = Expr(:call, variables...)
+end
+
+function analyze_call(expr)
+    @assert Meta.isexpr(expr, :call)
+    args = []
+    for item in expr.args[2:end]
+        if Meta.isexpr(item, :parameters)
+            append!(args, analyze_call_arg.(item.args, true))
+        else
+            push!(args, analyze_call_arg(item, false))
+        end
+    end
+    pushfirst!(args, (kind=:calle, expr=expr.args[1], symbol=gensym("calle")))
+    return (args=args, expr=expr)
+end
+
+function build_call(ana)
+    @assert :args in propertynames(ana)
+    @assert :expr in propertynames(ana)
+    arglist = []
+    parameterlist = []
+    for item in ana.args[2:end]
+        list =  item.isparameter ? parameterlist : arglist
+        if item.kind == :arg
+            push!(list, item.symbol)
+        elseif item.kind == :kw
+            push!(list, Expr(:kw, item.key, item.symbol))
+        elseif item.kind == :splat
+            push!(list, Expr(SPLAT, item.symbol))
+        elseif item.kind == :ghost
+            push!(list, esc(item.expr))
+        else
+            error("Unreachable $item $ana")
+        end
+    end
+    callargs = copy(arglist)
+    if !isempty(parameterlist)
+        pushfirst!(callargs, Expr(:parameters, parameterlist...))
+    end
+    item = ana.args[1]
+    @assert item.kind == :calle
+    f = item.symbol
+    return Expr(:call, f, callargs...)
+end
+
+function check(c, ::CallFlavor)
+    ana = analyze_call(c.code)
+    variables = []
+    argument_expressions = []
+    assignments = []
+    for item in ana.args
+        if item.kind == :ghost
+            nothing
+        else
+            push!(variables, item.symbol)
+            push!(argument_expressions, item.expr)
+            push!(assignments, :($(item.symbol) = $(esc(item.expr))))
+        end
+    end
+    condition = build_call(ana)
     info = Expr(:call, :CallErrorInfo,
                 QuoteNode(c.code),
                 c.checkflavor,
-                QuoteNode(c.code.args),
+                QuoteNode(argument_expressions),
                 Expr(:vect, variables...),
                 Expr(:tuple, esc.(c.options)...))
+
     expr_error_block(info, condition, assignments...)
 end
 
