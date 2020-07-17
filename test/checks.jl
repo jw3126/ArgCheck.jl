@@ -190,6 +190,11 @@ end
     @test occursin("10", err.msg)
     @test occursin("20", err.msg)
 
+    x = 1.234
+    err = @catch_exception_object @argcheck (!isfinite)(x)
+    @test occursin(string(x), err.msg)
+    err = @catch_exception_object @argcheck !isfinite(x)
+    @test_broken occursin(string(x), err.msg)
 end
 
 @testset "complicated calls" begin
@@ -271,6 +276,5 @@ end
     @test Meta.isexpr(ArgCheck.LABEL_BEGIN_CHECK, :meta)
     @test Meta.isexpr(ArgCheck.LABEL_END_CHECK, :meta)
 end
-
 
 end#module
