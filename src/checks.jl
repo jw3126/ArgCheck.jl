@@ -240,9 +240,16 @@ function expr_error_block(info, condition, preamble...)
         if $condition
             nothing
         else
-            throw(build_error($info))
+            $throw_check_error($info)
         end
     end
+end
+
+@noinline function throw_check_error(info...)::Union{}
+    # the compiler sometimes deoptimizes functions with inline errors
+    @nospecialize
+    err = build_error(info...)
+    throw(err)
 end
 
 default_exception_type(::ArgCheckFlavor) = ArgumentError
