@@ -1,6 +1,6 @@
 # ArgCheck
 
-[![Build Status](https://travis-ci.org/jw3126/ArgCheck.jl.svg?branch=master)](https://travis-ci.org/jw3126/ArgCheck.jl)
+![CI](https://github.com/jw3126/ArgCheck.jl/workflows/CI/badge.svg)
 [![codecov.io](https://codecov.io/github/jw3126/ArgCheck.jl/coverage.svg?branch=master)](http://codecov.io/github/jw3126/ArgCheck.jl?branch=master)
 ## Installation
 ```Julia
