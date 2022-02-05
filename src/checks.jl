@@ -237,14 +237,14 @@ function check(c::Checker, ::ComparisonFlavor)
 end
 
 function expr_error_block(info, condition, preamble...)
-    @q begin
+    quote
         $(preamble...)
         if $condition
             nothing
         else
             throw_check_error($info)
         end
-    end
+    end |> Base.remove_linenums!
 end
 
 @noinline function throw_check_error(info...)::Union{}
