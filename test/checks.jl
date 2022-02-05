@@ -190,6 +190,17 @@ end
     @test occursin("10", err.msg)
     @test occursin("20", err.msg)
 
+    # check argument orders
+    err = @catch_exception_object @argcheck let 
+        a = 1.0; b = 1.2; atol = 0.1; nvalue = false; rtol = 0.05;
+        @check isapprox(a, b, atol=atol, nans=nvalue; rtol)
+    end
+    locations = map(["a", "b", "atol", "nvalue", "rtol"]) do name
+        findfirst(name, err.msg)
+    end
+    @test all(x -> x isa UnitRange, locations)
+    @test issorted(getindex.(locations, 1))
+
     x = 1.234
     err = @catch_exception_object @argcheck (!isfinite)(x)
     @test occursin(string(x), err.msg)
