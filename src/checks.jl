@@ -25,6 +25,7 @@ struct CheckFlavor    <: AbstractCheckFlavor end
 abstract type AbstractCodeFlavor end
 struct CallFlavor       <: AbstractCodeFlavor end
 struct ComparisonFlavor <: AbstractCodeFlavor end
+struct SubtypeFlavor    <: AbstractCodeFlavor end
 struct FallbackFlavor   <: AbstractCodeFlavor end
 
 struct Checker
@@ -43,6 +44,13 @@ struct CallErrorInfo <: AbstractErrorInfo
     options::Tuple
 end
 struct ComparisonErrorInfo <: AbstractErrorInfo
+    code
+    checkflavor::AbstractCheckFlavor
+    argument_expressions::Vector
+    argument_values::Vector
+    options::Tuple
+end
+struct SubtypeErrorInfo <: AbstractErrorInfo
     code
     checkflavor::AbstractCheckFlavor
     argument_expressions::Vector
@@ -97,6 +105,8 @@ function check(ex, checkflavor, options...)
         ComparisonFlavor()
     elseif isexpr(ex, :call)
         CallFlavor()
+    elseif isexpr(ex, :(<:))
+        SubtypeFlavor()
     else
         FallbackFlavor()
     end
@@ -180,7 +190,7 @@ function build_call(ana)
     return Expr(:call, f, callargs...)
 end
 
-function check(c, ::CallFlavor)
+function check(c::Checker, ::CallFlavor)
     ana = analyze_call(c.code)
     variables = []
     argument_expressions = []
@@ -236,6 +246,22 @@ function check(c::Checker, ::ComparisonFlavor)
     Expr(:block, ret...)
 end
 
+function check(c::Checker, ::SubtypeFlavor)
+    lhs, rhs = c.code.args
+    vlhs, vrhs = gensym(:lhs), gensym(:rhs)
+
+    condition = Expr(:(<:), vlhs, vrhs)
+    assignments = (Expr(:(=), vlhs, esc(lhs)), Expr(:(=), vrhs, esc(rhs)))
+    info = Expr(:call, :SubtypeErrorInfo,
+                QuoteNode(c.code),
+                c.checkflavor,
+                QuoteNode([lhs, rhs]),
+                Expr(:vect, vlhs, vrhs),
+                Expr(:tuple, esc.(c.options)...))
+
+    expr_error_block(info, condition, assignments...)
+end
+
 function expr_error_block(info, condition, preamble...)
     quote
         $(preamble...)
@@ -277,6 +303,7 @@ end
 error_message(info::FallbackErrorInfo) = "$(info.code) must hold."
 error_message(info::CallErrorInfo) = fancy_error_message(info)
 error_message(info::ComparisonErrorInfo) = fancy_error_message(info)
+error_message(info::SubtypeErrorInfo) = fancy_error_message(info)
 
 function pretty_string(data)
     io = IOBuffer()

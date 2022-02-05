@@ -195,7 +195,7 @@ end
         a = 1.0; b = 1.2; atol = 0.1; nvalue = false; rtol = 0.05;
         @check isapprox(a, b, atol=atol, nans=nvalue; rtol)
     end
-    locations = map(["a", "b", "atol", "nvalue", "rtol"]) do name
+    locations = map(["a =>", "b =>", "atol =>", "nvalue =>", "rtol =>"]) do name
         findfirst(name, err.msg)
     end
     @test all(x -> x isa UnitRange, locations)
@@ -206,6 +206,15 @@ end
     @test occursin(string(x), err.msg)
     err = @catch_exception_object @argcheck !isfinite(x)
     @test_broken occursin(string(x), err.msg)
+
+
+    t1 = Int32
+    t2 = Integer
+    err = @catch_exception_object @argcheck t2 <: t1
+    @test occursin(string(t1), err.msg)
+    @test occursin(string(t2), err.msg)
+    @test occursin("t1 =>", err.msg)
+    @test occursin("t2 =>", err.msg)
 end
 
 @testset "complicated calls" begin
