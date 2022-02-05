@@ -138,14 +138,16 @@ end
 function analyze_call(expr)
     @assert Meta.isexpr(expr, :call)
     args = []
+    kw_args = []
     for item in expr.args[2:end]
         if Meta.isexpr(item, :parameters)
-            append!(args, analyze_call_arg.(item.args, true))
+            append!(kw_args, analyze_call_arg.(item.args, true))
         else
             push!(args, analyze_call_arg(item, false))
         end
     end
     pushfirst!(args, (kind=:calle, expr=expr.args[1], symbol=gensym("calle")))
+    append!(args, kw_args)
     return (args=args, expr=expr)
 end
 
@@ -235,14 +237,14 @@ function check(c::Checker, ::ComparisonFlavor)
 end
 
 function expr_error_block(info, condition, preamble...)
-    reti = quote
+    quote
         $(preamble...)
         if $condition
             nothing
         else
-            $throw_check_error($info)
+            throw_check_error($info)
         end
-    end
+    end |> Base.remove_linenums!
 end
 
 @noinline function throw_check_error(info...)::Union{}
