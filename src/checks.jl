@@ -235,12 +235,12 @@ function check(c::Checker, ::ComparisonFlavor)
 end
 
 function expr_error_block(info, condition, preamble...)
-    reti = quote
+    @q begin
         $(preamble...)
         if $condition
             nothing
         else
-            $throw_check_error($info)
+            throw_check_error($info)
         end
     end
 end
