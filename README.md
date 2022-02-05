@@ -28,6 +28,7 @@ You can also customize the error:
 @argcheck size(A) == size(B) DimensionMismatch
 @argcheck det(A) < 0 DomainError
 @argcheck false MyCustomError(my, args...)
+@argcheck isfinite(x) "custom error message"
 ```
 
 ### Performance
