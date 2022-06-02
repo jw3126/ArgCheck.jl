@@ -215,6 +215,15 @@ end
     @test occursin(string(t2), err.msg)
     @test occursin("t1 =>", err.msg)
     @test occursin("t2 =>", err.msg)
+
+    # Symbols
+    x = :x
+    err = @catch_exception_object @argcheck x == :X
+    @test occursin(":x", err.msg)
+    x = :y
+    err = @catch_exception_object @argcheck x == :Y
+    @test occursin(":y", err.msg)
+    @test !occursin(":x", err.msg)
 end
 
 @testset "complicated calls" begin
@@ -268,6 +277,7 @@ end
 
 @testset "pretty_string" begin
     @test pretty_string("asd") == "\"asd\""
+    @test pretty_string(:asd) == ":asd"
 
     data = rand(10000:99999, 1000)
     str = pretty_string(data)

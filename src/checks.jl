@@ -313,7 +313,6 @@ function pretty_string(data)
     String(take!(io))
 end
 pretty_string(x::Number) = string(x)
-pretty_string(s::Symbol) = string(s)
 pretty_string(ex::Expr) = string(ex)
 
 function fancy_error_message(info)
@@ -322,7 +321,11 @@ function fancy_error_message(info)
     values = info.argument_values
     lines = String[]
     foreach(exprs, values) do ex, val
-        pex = pretty_string(ex)
+        pex = if ex isa Symbol
+            string(ex)
+        else
+            pretty_string(ex)
+        end
         pval = pretty_string(val)
         if pex != pval
             push!(lines, "$pex => $pval")
