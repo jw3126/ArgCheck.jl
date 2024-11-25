@@ -260,7 +260,8 @@ end
 
 @testset "custom message" begin
     x = 0
-    @test_throws ArgumentError @argcheck x > 1 "this should not happen"
+    expected = ArgumentError("this should not happen\nx > 1 must hold. Got\nx => 0")
+    @test_throws expected @argcheck x > 1 "this should not happen"
     @argcheck true "this should not happen"
 end
 
