@@ -288,7 +288,7 @@ function build_error(info)
 end
 function build_error(info, checkflavor, msg::AbstractString)
     E = default_exception_type(checkflavor)
-    E(msg)
+    E(msg * "\n" * error_message(info))
 end
 
 function build_error(info, checkflavor,
