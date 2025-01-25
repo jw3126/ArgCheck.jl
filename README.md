@@ -33,7 +33,3 @@ You can also customize the error:
 
 ### Performance
 `@argcheck code` is as fast as `@assert` or a hand written `if`.
-@unsafe_skipargcheck f(-1)
-```
-This feature is currently experimental. It may be silently changed or removed without increasing the major ArgCheck version number.
-See the OptionalArgChecks documentation for some of the caveats.
