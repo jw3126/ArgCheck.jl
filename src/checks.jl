@@ -80,7 +80,7 @@ end
 See also [`@check`](@ref).
 """
 macro argcheck(ex, options...)
-    check(ex, ArgCheckFlavor(), options...)
+    checkmacro(ex, ArgCheckFlavor(), options...)
 end
 
 """
@@ -97,10 +97,13 @@ Usage is as follows:
 See also [`@argcheck`](@ref).
 """
 macro check(ex, options...)
-    check(ex, CheckFlavor(), options...)
+    checkmacro(ex, CheckFlavor(), options...)
 end
 
-function check(ex, checkflavor, options...)
+function checkmacro(ex, checkflavor, options...)
+    if length(options) > 1
+        error("Too many arguments for @check/@argcheck macro")
+    end
     codeflavor = if isexpr(ex, :comparison)
         ComparisonFlavor()
     elseif isexpr(ex, :call)

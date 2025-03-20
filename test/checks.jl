@@ -308,4 +308,10 @@ end
     @test Meta.isexpr(ArgCheck.LABEL_END_CHECK, :meta)
 end
 
+@testset "Informative error message at macro eval time for extra arguments #48" begin
+    # https://github.com/jw3126/ArgCheck.jl/issues/48
+    @test_throws "Too many arguments" @macroexpand( @argcheck 1 == 1 1.8 "That's good")
+    @test_throws "Too many arguments" @macroexpand( @argcheck 1 == 2 1.8 "That's good")
+end
+
 end#module
