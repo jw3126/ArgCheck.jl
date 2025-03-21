@@ -1,7 +1,7 @@
 name = "ArgCheck"
 uuid = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 license = "MIT"
-version = "2.4.1"
+version = "2.5.0"
 
 [compat]
 julia = "1.10"
