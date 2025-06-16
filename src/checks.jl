@@ -73,7 +73,7 @@ Usage is as follows:
 function myfunction(k,n,A,B)
     @argcheck k > n
     @argcheck size(A) == size(B) DimensionMismatch
-    @argcheck det(A) < 0 DomainError()
+    @argcheck det(A) < 0 DomainError
     # doit
 end
 ```
@@ -92,7 +92,7 @@ Usage is as follows:
 ```Julia
 @check k > n
 @check size(A) == size(B) DimensionMismatch
-@check det(A) < 0 DomainError()
+@check det(A) < 0 DomainError
 ```
 See also [`@argcheck`](@ref).
 """
